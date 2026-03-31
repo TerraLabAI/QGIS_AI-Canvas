@@ -1,17 +1,12 @@
-# AI Edit by TerraLab
 
-AI-powered image editing for geospatial data. Select a zone on your map canvas, describe a transformation, and receive the result as a georeferenced raster layer.
+# AI Edit in QGIS [![QGIS](https://img.shields.io/badge/QGIS-3.28+-93b023?style=flat-square&logo=qgis&logoColor=white)](https://qgis.org) [![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat-square&logo=windows&logoColor=white)]() [![macOS](https://img.shields.io/badge/macOS-000000?style=flat-square&logo=apple&logoColor=white)]() [![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black)]()
 
-Powered by [Nano Banana 2](https://terra-lab.ai/ai-edit).
-
-## Quick Start
-
-1. Install from the QGIS Plugin Manager
-2. Activate with your key from [terra-lab.ai](https://terra-lab.ai/ai-edit)
-3. Click **Start AI Edit**, draw a rectangle on the canvas
-4. Describe the desired transformation and click **Generate**
+## AI-powered image editing for your geospatial rasters
+### Follow this tutorial/documentation to use the plugin :
+ https://terra-lab.ai/ai-edit
+---
 
 ## Release
 
-1. Create a GitHub Release with the new version tag
-2. Upload the plugin ZIP to [plugins.qgis.org](https://plugins.qgis.org)
+1. Create a GitHub Release with a tag matching `vX.Y.Z` (e.g. `gh release create v0.1.0`)
+2. Upload the plugin zip manually to [plugins.qgis.org](https://plugins.qgis.org)
