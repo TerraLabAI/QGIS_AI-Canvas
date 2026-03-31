@@ -5,8 +5,3 @@
 ### Follow this tutorial/documentation to use the plugin :
  https://terra-lab.ai/ai-edit
 ---
-
-## Release
-
-1. Create a GitHub Release with a tag matching `vX.Y.Z` (e.g. `gh release create v0.1.0`)
-2. Upload the plugin zip manually to [plugins.qgis.org](https://plugins.qgis.org)
