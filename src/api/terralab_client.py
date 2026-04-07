@@ -191,7 +191,7 @@ class TerraLabClient:
         self,
         method: str,
         path: str,
-        auth: dict,
+        auth: Optional[dict] = None,
         body: Optional[bytes] = None,
         timeout_ms: int = _TIMEOUT_API,
     ) -> dict:
@@ -205,8 +205,9 @@ class TerraLabClient:
         req.setRawHeader(b"Content-Type", b"application/json")
         req.setTransferTimeout(timeout_ms)
 
-        for key, value in auth.items():
-            req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
+        if auth:
+            for key, value in auth.items():
+                req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
 
         blocker = QgsBlockingNetworkRequest()
 
