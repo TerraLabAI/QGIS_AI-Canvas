@@ -534,9 +534,7 @@ class AIEditPlugin:
             layer = add_geotiff_to_project(
                 result_info["geotiff_path"], result_info.get("prompt", "")
             )
-            self._dock_widget.set_generation_complete(
-                tr("layer_added").format(name=layer.name())
-            )
+            self._dock_widget.set_generation_complete(layer.name())
             log(f"Generation complete: {result_info['geotiff_path']}")
         except Exception as e:
             self._dock_widget.set_idle()

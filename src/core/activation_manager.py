@@ -53,6 +53,7 @@ _STRINGS = {
         "prompt_templates": "\u25bc Prompt Templates",
         "generate": "Generate",
         "stop": "Stop",
+        "prompt_too_short": "Please describe what you want to change (at least 10 characters, 2 words).",
         "preparing": "Preparing...",
         "no_visible_layer": "No visible layer. Add imagery to your project.",
         "activate_title": "Activate AI Edit",
@@ -89,6 +90,7 @@ _STRINGS = {
         "free_promo_message": "Subscribe now. First month at 13 euros instead of 19 euros with code {code}.",
         "free_subscribe": "Subscribe now",
         "free_or_paste_key": "Already have a key? Paste it here",
+        "free_cooldown": "Resend in {seconds}s",
         # Plugin
         "ai_edit": "AI Edit",
         "ai_edit_tooltip": "AI Edit by TerraLab\nAI-powered image editing for geospatial data",
@@ -141,6 +143,7 @@ _STRINGS = {
         "prompt_templates": "\u25bc Modèles de prompt",
         "generate": "Générer",
         "stop": "Arrêter",
+        "prompt_too_short": "Décrivez ce que vous voulez changer (au moins 10 caractères, 2 mots).",
         "preparing": "Préparation...",
         "no_visible_layer": "Aucune couche visible. Ajoutez une image à votre projet.",
         "activate_title": "Activer AI Edit",
@@ -177,6 +180,7 @@ _STRINGS = {
         "free_promo_message": "Abonnez-vous. Premier mois a 13 euros au lieu de 19 euros avec le code {code}.",
         "free_subscribe": "S'abonner maintenant",
         "free_or_paste_key": "Vous avez deja une cle ? Collez-la ici",
+        "free_cooldown": "Renvoyer dans {seconds}s",
         # Plugin
         "ai_edit": "AI Edit",
         "ai_edit_tooltip": "AI Edit par TerraLab\nÉdition d'images géospatiales par IA",
@@ -228,6 +232,7 @@ _STRINGS = {
         "prompt_templates": "\u25bc Plantillas de prompt",
         "generate": "Generar",
         "stop": "Detener",
+        "prompt_too_short": "Describe lo que quieres cambiar (al menos 10 caracteres, 2 palabras).",
         "preparing": "Preparando...",
         "no_visible_layer": "Ninguna capa visible. Agregue una imagen a su proyecto.",
         "activate_title": "Activar AI Edit",
@@ -264,6 +269,7 @@ _STRINGS = {
         "free_promo_message": "Suscribase ahora. Primer mes a 13 euros en lugar de 19 euros con el codigo {code}.",
         "free_subscribe": "Suscribirse ahora",
         "free_or_paste_key": "Ya tiene una clave? Peguela aqui",
+        "free_cooldown": "Reenviar en {seconds}s",
         # Plugin
         "ai_edit": "AI Edit",
         "ai_edit_tooltip": "AI Edit por TerraLab\nEdición de imágenes geoespaciales con IA",
@@ -315,6 +321,7 @@ _STRINGS = {
         "prompt_templates": "\u25bc Modelos de prompt",
         "generate": "Gerar",
         "stop": "Parar",
+        "prompt_too_short": "Descreva o que deseja alterar (mínimo 10 caracteres, 2 palavras).",
         "preparing": "Preparando...",
         "no_visible_layer": "Nenhuma camada visível. Adicione uma imagem ao seu projeto.",
         "activate_title": "Ativar AI Edit",
@@ -351,6 +358,7 @@ _STRINGS = {
         "free_promo_message": "Assine agora. Primeiro mes a 13 euros em vez de 19 euros com o codigo {code}.",
         "free_subscribe": "Assinar agora",
         "free_or_paste_key": "Ja tem uma chave? Cole aqui",
+        "free_cooldown": "Reenviar em {seconds}s",
         # Plugin
         "ai_edit": "AI Edit",
         "ai_edit_tooltip": "AI Edit por TerraLab\nEdição de imagens geoespaciais com IA",
@@ -475,7 +483,7 @@ def get_dashboard_url() -> str:
 def get_tutorial_url(client=None) -> str:
     """Get tutorial URL from server config, falling back to product page."""
     config = get_server_config(client)
-    return config.get("tutorial_url", "https://terra-lab.ai/ai-edit")
+    return config.get("tutorial_url", "https://youtu.be/d8D_GmaX9NM?si=UpLtVl3biKIB2HuY")
 
 
 # -- Device ID management --

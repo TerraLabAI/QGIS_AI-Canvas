@@ -59,6 +59,12 @@ class AIEditDockWidget(QDockWidget):
         layout.setContentsMargins(8, 4, 8, 8)
         layout.setSpacing(6)
 
+        # Cooldown timer for free signup button (prevents spam clicks)
+        self._signup_cooldown_remaining = 0
+        self._signup_cooldown_timer = QTimer(self)
+        self._signup_cooldown_timer.setInterval(1000)
+        self._signup_cooldown_timer.timeout.connect(self._on_cooldown_tick)
+
         # --- Activation section ---
         self._activation_widget = self._build_activation_section()
         layout.addWidget(self._activation_widget)
@@ -109,10 +115,10 @@ class AIEditDockWidget(QDockWidget):
         self._prompt_section = QWidget()
         prompt_layout = QVBoxLayout(self._prompt_section)
         prompt_layout.setContentsMargins(0, 0, 0, 0)
-        prompt_layout.setSpacing(4)
+        prompt_layout.setSpacing(2)
 
         self._prompt_label = QLabel(tr("what_change"))
-        self._prompt_label.setStyleSheet("font-weight: bold; color: palette(text);")
+        self._prompt_label.setStyleSheet("font-weight: bold; color: palette(text); margin: 0px; padding: 0px;")
         prompt_layout.addWidget(self._prompt_label)
 
         self._prompt_input = QTextEdit()
@@ -200,12 +206,29 @@ class AIEditDockWidget(QDockWidget):
         self._progress_widget.setVisible(False)
         main_layout.addWidget(self._progress_widget)
 
-        # Status message
+        # Status message box (same pattern as AI Segmentation info boxes)
+        self._status_widget = QWidget()
+        self._status_widget.setVisible(False)
+        status_box_layout = QHBoxLayout(self._status_widget)
+        status_box_layout.setContentsMargins(8, 6, 8, 6)
+        status_box_layout.setSpacing(8)
+        self._status_icon = QLabel()
+        _ico = self._status_widget.style().pixelMetric(
+            QStyle.PixelMetric.PM_SmallIconSize
+        )
+        self._status_icon.setFixedSize(_ico, _ico)
+        self._status_icon_size = _ico
+        status_box_layout.addWidget(
+            self._status_icon, 0, Qt.AlignTop
+        )
         self._status_label = QLabel("")
         self._status_label.setWordWrap(True)
         self._status_label.setOpenExternalLinks(True)
-        self._status_label.setStyleSheet("font-size: 11px;")
-        main_layout.addWidget(self._status_label)
+        self._status_label.setStyleSheet(
+            "font-size: 11px; background: transparent; border: none;"
+        )
+        status_box_layout.addWidget(self._status_label, 1)
+        main_layout.addWidget(self._status_widget)
 
         # Trial exhausted info box
         self._trial_info_box = QFrame()
@@ -558,10 +581,32 @@ class AIEditDockWidget(QDockWidget):
         self._code_input.clear()
         self._code_input.setFocus()
 
-    def reset_free_signup_button(self):
-        """Re-enable the free signup button after result."""
-        self._free_submit_btn.setEnabled(True)
-        self._free_submit_btn.setText(tr("free_submit").replace("{credits}", "10"))
+    def reset_free_signup_button(self, start_cooldown: bool = True):
+        """Start a 60s cooldown before re-enabling the free signup button.
+
+        Prevents users from spamming the magic link button, which would
+        trigger Supabase's per-user email interval (60s) or our IP rate limit.
+        """
+        if start_cooldown:
+            self._signup_cooldown_remaining = 60
+            self._free_submit_btn.setEnabled(False)
+            self._free_submit_btn.setText(tr("free_cooldown").format(seconds=60))
+            self._signup_cooldown_timer.start()
+        else:
+            self._free_submit_btn.setEnabled(True)
+            self._free_submit_btn.setText(tr("free_submit").replace("{credits}", "10"))
+
+    def _on_cooldown_tick(self):
+        """Tick the cooldown timer, re-enable button when done."""
+        self._signup_cooldown_remaining -= 1
+        if self._signup_cooldown_remaining <= 0:
+            self._signup_cooldown_timer.stop()
+            self._free_submit_btn.setEnabled(True)
+            self._free_submit_btn.setText(tr("free_submit").replace("{credits}", "10"))
+        else:
+            self._free_submit_btn.setText(
+                tr("free_cooldown").format(seconds=self._signup_cooldown_remaining)
+            )
 
     def show_post_signup_state(self):
         """After successful email send, hide signup section and show key input directly."""
@@ -603,23 +648,32 @@ class AIEditDockWidget(QDockWidget):
         self._start_btn.setVisible(False)
         self._warning_widget.setVisible(False)
         self._instruction_box.setVisible(True)
-        self._status_label.setText("")
+        self._hide_status_box()
 
     def set_zone_selected(self):
         """Zone drawn: show prompt flow (no Start button)."""
         self._zone_selected = True
         self._bold_label.setVisible(False)
         self._instruction_box.setVisible(False)
+        self._hide_status_box()
         self._prompt_section.setVisible(True)
         self._consent_widget.setVisible(not has_consent())
         self._generate_btn.setVisible(True)
         self._stop_btn.setVisible(True)
+        self._stop_shortcut.setEnabled(True)
         self._update_generate_enabled()
         # Deferred focus: survives Qt layout recalculations from visibility changes
         QTimer.singleShot(0, self._prompt_input.setFocus)
 
+    def _stop_progress_animation(self):
+        """Stop the smooth progress animation timer if running."""
+        if hasattr(self, '_progress_timer') and self._progress_timer is not None:
+            self._progress_timer.stop()
+
     def set_idle(self):
         """Reset everything to initial state."""
+        self._stop_progress_animation()
+        self._hide_status_box()
         self._active = False
         self._zone_selected = False
         self._bold_label.setVisible(True)
@@ -650,6 +704,7 @@ class AIEditDockWidget(QDockWidget):
             # Reset progress bar to determinate 0%
             self._progress_bar.setRange(0, 100)
             self._progress_bar.setValue(0)
+            self._hide_status_box()
             # Keep prompt section visible but disable interaction
             self._prompt_section.setVisible(True)
             self._prompt_input.setReadOnly(True)
@@ -661,7 +716,8 @@ class AIEditDockWidget(QDockWidget):
             self._templates_btn.setEnabled(False)
             self._consent_widget.setVisible(False)
             self._generate_btn.setVisible(False)
-            self._stop_btn.setVisible(True)
+            self._stop_btn.setVisible(False)
+            self._stop_shortcut.setEnabled(False)
             self._progress_label.setText(tr("preparing"))
         else:
             # Restore prompt interaction
@@ -674,29 +730,82 @@ class AIEditDockWidget(QDockWidget):
             self._consent_widget.setVisible(not has_consent() and self._zone_selected)
             self._generate_btn.setVisible(self._zone_selected)
             self._stop_btn.setVisible(self._zone_selected)
+            self._stop_shortcut.setEnabled(True)
             self._prompt_section.setVisible(self._zone_selected)
 
         self._start_shortcut.setEnabled(not generating)
-        self._stop_shortcut.setEnabled(not generating)
 
     def set_progress_message(self, message: str, percentage: int = -1):
-        """Update the progress label and bar during generation."""
+        """Update the progress label and bar during generation with smooth animation."""
         self._progress_label.setText(message)
         if percentage >= 0:
             self._progress_bar.setRange(0, 100)
-            self._progress_bar.setValue(percentage)
+            self._progress_target = percentage
+            if not hasattr(self, '_progress_timer') or self._progress_timer is None:
+                self._progress_timer = QTimer(self)
+                self._progress_timer.setInterval(30)
+                self._progress_timer.timeout.connect(self._animate_progress)
+            if not self._progress_timer.isActive():
+                self._progress_timer.start()
+
+    def _animate_progress(self):
+        """Smoothly animate progress bar toward target value."""
+        current = self._progress_bar.value()
+        target = getattr(self, '_progress_target', current)
+        if current < target:
+            self._progress_bar.setValue(current + 1)
+        else:
+            if hasattr(self, '_progress_timer') and self._progress_timer is not None:
+                self._progress_timer.stop()
+
+    def _show_status_box(self, message: str, box_type: str = "info"):
+        """Show a styled status message box (AI Segmentation style)."""
+        styles = {
+            "error": (
+                "QWidget { background-color: rgba(211, 47, 47, 0.25); "
+                "border: 1px solid rgba(211, 47, 47, 0.6); border-radius: 4px; }"
+                "QLabel { background: transparent; border: none; color: #ef5350; }",
+                QStyle.StandardPixmap.SP_MessageBoxCritical,
+            ),
+            "success": (
+                "QWidget { background-color: rgba(46, 125, 50, 0.25); "
+                "border: 1px solid rgba(46, 125, 50, 0.6); border-radius: 4px; }"
+                "QLabel { background: transparent; border: none; color: #66bb6a; }",
+                QStyle.StandardPixmap.SP_DialogApplyButton,
+            ),
+            "warning": (
+                "QWidget { background-color: rgba(255, 152, 0, 0.2); "
+                "border: 1px solid rgba(255, 152, 0, 0.6); border-radius: 4px; }"
+                "QLabel { background: transparent; border: none; color: #ffa726; }",
+                QStyle.StandardPixmap.SP_MessageBoxWarning,
+            ),
+        }
+        style_str, icon_enum = styles.get(box_type, styles["error"])
+        self._status_widget.setStyleSheet(style_str)
+        icon = self._status_widget.style().standardIcon(icon_enum)
+        self._status_icon.setPixmap(icon.pixmap(self._status_icon_size, self._status_icon_size))
+        self._status_label.setText(message)
+        self._status_widget.setVisible(True)
+
+    def _hide_status_box(self):
+        self._status_widget.setVisible(False)
+        self._status_label.setText("")
 
     def set_status(self, message: str, is_error: bool = False):
-        color = BRAND_RED if is_error else "#888"
-        self._status_label.setStyleSheet(f"color: {color}; font-size: 11px;")
-        self._status_label.setText(message)
+        if not message:
+            self._hide_status_box()
+        else:
+            self._show_status_box(message, "error")
         self._trial_info_box.setVisible(False)
 
     def set_generation_complete(self, layer_name: str):
         """Show success message and reset to idle state."""
+        self._stop_progress_animation()
         self._progress_bar.setValue(100)
         self._progress_widget.setVisible(False)
-        self._status_label.setText("")
+        self._show_status_box(
+            f"Generation complete! Layer \"{layer_name}\" added.", "success"
+        )
         self._active = False
         self._zone_selected = False
         self._bold_label.setVisible(True)
@@ -724,7 +833,7 @@ class AIEditDockWidget(QDockWidget):
             f'font-weight: bold;">{tr("subscribe_link")}</a>'
         )
         self._trial_info_box.setVisible(True)
-        self._status_label.setText("")
+        self._hide_status_box()
 
     def hide_trial_info(self):
         self._trial_info_box.setVisible(False)
@@ -797,8 +906,13 @@ class AIEditDockWidget(QDockWidget):
 
     def _on_generate_clicked(self):
         prompt = self.get_prompt()
-        if prompt:
-            self.generate_clicked.emit(prompt)
+        if not prompt:
+            return
+        if len(prompt) < 10 or len(prompt.split()) < 2:
+            self._show_status_box(tr("prompt_too_short"), "warning")
+            return
+        self._hide_status_box()
+        self.generate_clicked.emit(prompt)
 
     def _on_change_key(self, _link=None):
         self.change_key_clicked.emit()
